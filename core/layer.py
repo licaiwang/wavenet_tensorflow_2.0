@@ -29,15 +29,15 @@ def residual_block(x,filters,kernel_size,rate):
 
     x = dilated_conv(filters,kernel_size,rate)(x)
     x = gate(x)
-    x =  conv_1D(256,1)(x)
+    x =  conv_1D(32,1)(x)
     
     return x
         
 
-# 16 我電腦的極限
 def generate_model(input_shape, residul_blocks = 16,residul_stacks = 2):
     inputs = Input(shape=input_shape)
-    x = causual_conv(256, 3 ,input_shape)(inputs)
+    # important fliter size
+    x = causual_conv(32, 3 ,input_shape)(inputs)
     
     rate = 0
     layers_per_stack = residul_blocks // residul_stacks
@@ -45,7 +45,7 @@ def generate_model(input_shape, residul_blocks = 16,residul_stacks = 2):
     for k in range (residul_blocks+1):
         rate = 2**(k % layers_per_stack)
         residul_x = x
-        x = residual_block(x,256,3,rate)
+        x = residual_block(x,32,3,rate)
         # 一開始
         if k == 0:
             skip_x = x
@@ -62,9 +62,10 @@ def generate_model(input_shape, residul_blocks = 16,residul_stacks = 2):
     x =  conv_1D(256,1)(x)
     x =  relu(x)
     x =  conv_1D(256,1)(x)
-    #x =  softmax(x)
+    # since use sparse_softmax_cross_entropy_with_logits
+    # x =  softmax(x)
     
-    
+
     model = Model(inputs=inputs, outputs=x,name="my_wavenet")
     
     return model
